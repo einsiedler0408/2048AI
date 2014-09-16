@@ -32,6 +32,8 @@ namespace _2048AI
             context.Response.Write(dir.ToString());
         }
 
+        private static int[,] LastGrids;
+        private static bool GoLeft;
         /// <summary>
         /// interface for your AI code 
         /// </summary>
@@ -42,7 +44,48 @@ namespace _2048AI
         /// <returns>3 for left</returns>
         private int AINextMove(int[,] grids)
         {
-            return new Random(DateTime.Now.Millisecond).Next() % 4;
+            int next = 1;
+            if (LastGrids == null)
+            {
+                LastGrids = new int[4, 4];
+                for (int i = 0; i < 4; i++)
+                    for (int j = 0; j < 4; j++)
+                        LastGrids[i, j] = 0;
+                GoLeft = true;
+            }
+            if (IsEqualtoLast(grids))
+                next = new Random(DateTime.Now.Millisecond).Next() % 4;
+            else
+            {
+                if (GoLeft)
+                {
+                    GoLeft = false;
+                    next = 3;
+                }
+                else
+                {
+                    GoLeft = true;
+                    next = 2;
+                }
+            }
+            for (int i = 0; i < 4; i++)
+                for (int j = 0; j < 4; j++)
+                {
+                    LastGrids[i, j] = grids[i, j];
+                }
+            return next;
+            //return new Random(DateTime.Now.Millisecond).Next() % 4;
+        }
+
+        private bool IsEqualtoLast(int[,] grids)
+        {
+            for (int i = 0; i < 4; i++)
+                    for (int j = 0; j < 4; j++)
+                    {
+                        if (grids[i, j] != LastGrids[i, j])
+                            return false;
+                    }
+            return true;
         }
 
         public bool IsReusable
