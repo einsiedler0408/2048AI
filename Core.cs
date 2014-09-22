@@ -17,8 +17,8 @@ namespace _2048AI
 
         private static Dictionary<UInt64, double> TransTable;
 
-        public const double ProbThreshold = 0.001;
-        public const int LayerThreshold = 5;
+        public const double ProbThreshold = 0.0005;
+        public const int LayerThreshold = 4;
         static Core()
         {
             CacheMoveUp = new UInt64[65536];
@@ -149,11 +149,11 @@ namespace _2048AI
                     }
                     else
                     {
-                        score1 -= 6 * num[j];
-                        score2 -= 6 * num[j];
+                        score1 -= 20;//5 * num[j];
+                        score2 -= 20;//5 * num[j];
                     }
                 }
-                CacheScore[i] = -Math.Min(score1, score2) * 2;
+                CacheScore[i] = -Math.Min(score1, score2) * 2.5;
                 for (int j = 0; j < 4; j++)
                 {
                     CacheScore[i] -= Math.Pow(num[j], 3.5) / 2.5;
@@ -206,7 +206,7 @@ namespace _2048AI
             if (num == 0) return 0;
             int tmp = 1;
             UInt64 result = 0;
-            while (tmp != num)
+            while (tmp < num)
             {
                 tmp *= 2;
                 result++;
@@ -297,7 +297,7 @@ namespace _2048AI
         private static double GetAvgGridScore(UInt64 grid, double prob, int layer)
         {
             int empty = GetEmpty(grid);
-            if (prob < ProbThreshold || layer == LayerThreshold || empty == 0)
+            if (prob < ProbThreshold || layer == 0 || empty == 0)
             {
                 return GetHeurScore(grid);
             }
@@ -326,8 +326,11 @@ namespace _2048AI
                 tile2 <<= 4;
             }
             score /= empty;
-
-            TransTable.Add(grid, score);
+            try
+            {
+                TransTable.Add(grid, score);
+            }
+            catch { }
 
             return score;
         }
@@ -345,11 +348,33 @@ namespace _2048AI
             for (int i = 0; i < 4; i++)
             {
                 UInt64 aftermove = Move(grid, i);
-                double score = GetAvgGridScore(aftermove, prob, layer + 1);
+                double score = GetAvgGridScore(aftermove, prob, layer - 1);
                 if (maxScore < score)
                     maxScore = score;
             }
             return maxScore;
+        }
+
+        private static int PredictLayer(int[,] grids)
+        {
+            int[] count = new int[20];
+            for (int i = 0; i < 20; i++)
+            {
+                count[i] = 0;
+            }
+            for (int i = 0; i < 4; i++)
+            {
+                for (int j = 0; j < 4; j++)
+                {
+                    count[Log2(grids[i, j])]++;
+                }
+            }
+            for (int i = 3; i < 20; i++)
+            {
+                if (count[i] == 0)
+                    return (i - 5);
+            }
+            return -1;
         }
 
         public static int GetProposeMove(int[,] grids)
@@ -363,7 +388,9 @@ namespace _2048AI
                 UInt64 aftermove = Move(grid, i);
                 if (aftermove == grid)
                     continue;
-                double score = GetAvgGridScore(aftermove, 1, 1);
+
+                int layers = Math.Max(PredictLayer(grids), LayerThreshold);
+                double score = GetAvgGridScore(aftermove, 1, layers);
                 if (maxScore < score)
                 {
                     maxScore = score;
