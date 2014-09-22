@@ -103,6 +103,7 @@
     <Compile Include="api.ashx.cs">
       <DependentUpon>api.ashx</DependentUpon>
     </Compile>
+    <Compile Include="Core.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -27,8 +27,7 @@ namespace _2048AI
                     grids[x, y] = cells[x * 4 + y];
                 }
             }
-
-            int dir = AINextMove(grids);
+            int dir = AINextMove1(grids);
             context.Response.Write(dir.ToString());
         }
 
@@ -42,7 +41,12 @@ namespace _2048AI
         /// <returns>1 for right </returns>
         /// <returns>2 for down </returns>
         /// <returns>3 for left</returns>
-        private int AINextMove(int[,] grids)
+        private int AINextMove1(int[,] grids)
+        {
+            return Core.GetProposeMove(grids);
+            //return new Random(DateTime.Now.Millisecond).Next() % 4;
+        }
+        private int AINextMove2(int[,] grids)
         {
             int next = 1;
             if (LastGrids == null)
@@ -54,7 +58,12 @@ namespace _2048AI
                 GoLeft = true;
             }
             if (IsEqualtoLast(grids))
+            {
                 next = new Random(DateTime.Now.Millisecond).Next() % 4;
+                //GoLeft = !GoLeft;
+            }
+               
+
             else
             {
                 if (GoLeft)

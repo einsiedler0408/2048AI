@@ -84,7 +84,9 @@ GameManager.prototype.actuate = function () {
 
   // Clear the state when the game is over (game over only, not win)
   if (this.over) {
+      this.restart();
     this.storageManager.clearGameState();
+
   } else {
     this.storageManager.setGameState(this.serialize());
   }
@@ -168,7 +170,7 @@ GameManager.prototype.move = function (direction) {
           self.score += merged.value;
 
           // The mighty 2048 tile
-          if (merged.value === 2048) self.won = true;
+          //if (merged.value === 2048) self.won = true;
         } else {
           self.moveTile(tile, positions.farthest);
         }
@@ -184,7 +186,8 @@ GameManager.prototype.move = function (direction) {
     this.addRandomTile();
 
     if (!this.movesAvailable()) {
-      this.over = true; // Game over!
+        this.over = true; // Game over!
+        //this.restart();
     }
 
     this.actuate();
