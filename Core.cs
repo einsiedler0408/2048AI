@@ -126,39 +126,79 @@ namespace _2048AI
                 //    SCORE_MERGES_WEIGHT * merges -
                 //    SCORE_MONOTONICITY_WEIGHT * Math.Min(monotonicity_left, monotonicity_right) -
                 //    SCORE_SUM_WEIGHT * sum;
+        //public const double SCORE_LOST_PENALTY = 200000.0;
+        //public const double SCORE_MONOTONICITY_POWER = 4.0;
+        //public const double SCORE_MONOTONICITY_WEIGHT = 47.0;
+        //public const double SCORE_SUM_POWER = 3.5;
+        //public const double SCORE_SUM_WEIGHT = 11.0;
+        //public const double SCORE_MERGES_WEIGHT = 700.0;
+        //public const double SCORE_EMPTY_WEIGHT = 270.0;
 
+            //    double score1 = 0;
+            //    double score2 = 0;
+            //    for (int j = 0; j < 3; j++)
+            //    {
+            //        if (num[j] == 0) continue;
+            //        int k = j + 1;
+            //        //for (k = j + 1; k < 4; k++)
+            //        //{
+            //        //    if (num[k] != 0) break;
+            //        //}
+            //        //if (k == 4) break;
+
+            //        if (num[j] < num[k])
+            //        {
+            //            score1 += Math.Pow(num[k], 4) - Math.Pow(num[j], 4);
+            //        }
+            //        else if (num[j] > num[k])
+            //        {
+            //            score2 += Math.Pow(num[j], 4) - Math.Pow(num[k], 4);
+            //        }
+            //        else
+            //        {
+            //            score1 -= 30;//5 * num[j];15
+            //            score2 -= 30;//5 * num[j];15
+            //        }
+            //    }
+            //    CacheScore[i] = -Math.Min(score1, score2) * 47;
+            //    for (int j = 0; j < 4; j++)
+            //    {
+            //        CacheScore[i] -= Math.Pow(num[j], 3.5) * 11;
+            //    }
+            //    CacheScore[i] += CacheEmpty[i] * 270;
+            //}
                 double score1 = 0;
                 double score2 = 0;
                 for (int j = 0; j < 3; j++)
                 {
                     if (num[j] == 0) continue;
                     int k = j + 1;
-                    for (k = j + 1; k < 4; k++)
-                    {
-                        if (num[k] != 0) break;
-                    }
-                    if (k == 4) break;
+                    //for (k = j + 1; k < 4; k++)
+                    //{
+                    //    if (num[k] != 0) break;
+                    //}
+                    //if (k == 4) break;
 
                     if (num[j] < num[k])
                     {
-                        score1 += Math.Pow(num[k], 4) - Math.Pow(num[j], 4);
+                        score1 += Math.Pow(2, num[k]) * (num[k] - num[j]) * 9;//
                     }
                     else if (num[j] > num[k])
                     {
-                        score2 += Math.Pow(num[j], 4) - Math.Pow(num[k], 4);
+                        score2 += Math.Pow(2, num[j]) * (num[j] - num[k]) * 9;
                     }
                     else
                     {
-                        score1 -= 20;//5 * num[j];
-                        score2 -= 20;//5 * num[j];
+                        score1 -= 30;//5 * num[j];
+                        score2 -= 30;//5 * num[j];
                     }
                 }
-                CacheScore[i] = -Math.Min(score1, score2) * 2.5;
+                CacheScore[i] = -Math.Min(score1, score2) * 47;
                 for (int j = 0; j < 4; j++)
                 {
-                    CacheScore[i] -= Math.Pow(num[j], 3.5) / 2.5;
+                    CacheScore[i] -= num[j] * num[j] * 20 * 11;//Math.Pow(num[j], 3.5) * 11;
                 }
-                CacheScore[i] += CacheEmpty[i] * 25;
+                CacheScore[i] += CacheEmpty[i] * 270;
             }
         }
         private static void _CacheMove()
