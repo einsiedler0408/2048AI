@@ -3,3 +3,8 @@ D:\Code\2048AI\bin\2048AI.dll
 D:\Code\2048AI\bin\2048AI.pdb
 D:\Code\2048AI\obj\Debug\2048AI.dll
 D:\Code\2048AI\obj\Debug\2048AI.pdb
+C:\Users\Einsiedler0408\Desktop\2048926\bin\2048AI.dll.config
+C:\Users\Einsiedler0408\Desktop\2048926\bin\2048AI.dll
+C:\Users\Einsiedler0408\Desktop\2048926\bin\2048AI.pdb
+C:\Users\Einsiedler0408\Desktop\2048926\obj\Debug\2048AI.dll
+C:\Users\Einsiedler0408\Desktop\2048926\obj\Debug\2048AI.pdb

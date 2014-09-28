@@ -84,7 +84,7 @@ GameManager.prototype.actuate = function () {
 
   // Clear the state when the game is over (game over only, not win)
   if (this.over) {
-     // this.restart();
+    this.restart();
     this.storageManager.clearGameState();
 
   } else {
@@ -187,7 +187,6 @@ GameManager.prototype.move = function (direction) {
 
     if (!this.movesAvailable()) {
         this.over = true; // Game over!
-        //this.restart();
     }
 
     this.actuate();

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Web;
 using System.Threading.Tasks;
+using System.Threading;
 
 namespace _2048AI
 {
@@ -15,7 +16,7 @@ namespace _2048AI
         public static double[] CacheScore;
         public static int[] CacheEmpty;
 
-        private static Dictionary<UInt64, double> TransTable;
+        private static List<Dictionary<UInt64, double>> TransTable;
 
         public const double ProbThreshold = 0.0005;
         public const int LayerThreshold = 4;
@@ -32,8 +33,11 @@ namespace _2048AI
 
             CacheScore = new double[65536];
             _CacheScore();
-
-            TransTable = new Dictionary<UInt64, double>();
+            TransTable = new List<Dictionary<ulong, double>>(4);
+            TransTable.Add(new Dictionary<UInt64, double>());
+            TransTable.Add(new Dictionary<UInt64, double>());
+            TransTable.Add(new Dictionary<UInt64, double>());
+            TransTable.Add(new Dictionary<UInt64, double>());
         }
         private static void _CacheEmpty()
         {
@@ -126,47 +130,8 @@ namespace _2048AI
                 //    SCORE_MERGES_WEIGHT * merges -
                 //    SCORE_MONOTONICITY_WEIGHT * Math.Min(monotonicity_left, monotonicity_right) -
                 //    SCORE_SUM_WEIGHT * sum;
-        //public const double SCORE_LOST_PENALTY = 200000.0;
-        //public const double SCORE_MONOTONICITY_POWER = 4.0;
-        //public const double SCORE_MONOTONICITY_WEIGHT = 47.0;
-        //public const double SCORE_SUM_POWER = 3.5;
-        //public const double SCORE_SUM_WEIGHT = 11.0;
-        //public const double SCORE_MERGES_WEIGHT = 700.0;
-        //public const double SCORE_EMPTY_WEIGHT = 270.0;
 
-            //    double score1 = 0;
-            //    double score2 = 0;
-            //    for (int j = 0; j < 3; j++)
-            //    {
-            //        if (num[j] == 0) continue;
-            //        int k = j + 1;
-            //        //for (k = j + 1; k < 4; k++)
-            //        //{
-            //        //    if (num[k] != 0) break;
-            //        //}
-            //        //if (k == 4) break;
 
-            //        if (num[j] < num[k])
-            //        {
-            //            score1 += Math.Pow(num[k], 4) - Math.Pow(num[j], 4);
-            //        }
-            //        else if (num[j] > num[k])
-            //        {
-            //            score2 += Math.Pow(num[j], 4) - Math.Pow(num[k], 4);
-            //        }
-            //        else
-            //        {
-            //            score1 -= 30;//5 * num[j];15
-            //            score2 -= 30;//5 * num[j];15
-            //        }
-            //    }
-            //    CacheScore[i] = -Math.Min(score1, score2) * 47;
-            //    for (int j = 0; j < 4; j++)
-            //    {
-            //        CacheScore[i] -= Math.Pow(num[j], 3.5) * 11;
-            //    }
-            //    CacheScore[i] += CacheEmpty[i] * 270;
-            //}
                 double score1 = 0;
                 double score2 = 0;
                 for (int j = 0; j < 3; j++)
@@ -181,24 +146,24 @@ namespace _2048AI
 
                     if (num[j] < num[k])
                     {
-                        score1 += Math.Pow(2, num[k]) * (num[k] - num[j]) * 9;//
+                        score1 += Math.Pow(2, num[k]) * (num[k] - num[j]) * 10;//
                     }
                     else if (num[j] > num[k])
                     {
-                        score2 += Math.Pow(2, num[j]) * (num[j] - num[k]) * 9;
+                        score2 += Math.Pow(2, num[j]) * (num[j] - num[k]) * 10;
                     }
                     else
                     {
-                        score1 -= 30;//5 * num[j];
-                        score2 -= 30;//5 * num[j];
+                        score1 -= 33;//5 * num[j];
+                        score2 -= 33;//5 * num[j];
                     }
                 }
-                CacheScore[i] = -Math.Min(score1, score2) * 47;
+                CacheScore[i] = -Math.Min(score1, score2) * 48;
                 for (int j = 0; j < 4; j++)
                 {
                     CacheScore[i] -= num[j] * num[j] * 20 * 11;//Math.Pow(num[j], 3.5) * 11;
                 }
-                CacheScore[i] += CacheEmpty[i] * 270;
+                CacheScore[i] += CacheEmpty[i] * 280;
             }
         }
         private static void _CacheMove()
@@ -334,17 +299,27 @@ namespace _2048AI
             return empty;
         }
 
-        private static double GetAvgGridScore(UInt64 grid, double prob, int layer)
+        private static double GetPanHeurScore(UInt64 grid)
+        {
+            double score = GetHeurScore(grid);
+            return score;// > 0 ? 0.9 * score : 1.1 * score;
+        }
+
+        private static double GetAvgGridScore(UInt64 grid, double prob, int layer, Dictionary<UInt64, double> transTable)
         {
             int empty = GetEmpty(grid);
-            if (prob < ProbThreshold || layer == 0 || empty == 0)
+            if (empty == 0)
+            {
+                return GetMoveScore(grid, prob, layer, transTable);
+            }
+            if (prob < ProbThreshold || layer == 0)
             {
                 return GetHeurScore(grid);
             }
             double score = 0;
             try
             {
-                score = TransTable[grid];
+                score = transTable[grid];
                 return score;
             }
             catch { }
@@ -359,8 +334,8 @@ namespace _2048AI
             {
                 if ((tmp & 0xf) == 0)
                 {
-                    score += GetMoveScore(grid | tile2, prob * 0.9, layer) * 0.9;
-                    score += GetMoveScore(grid | (tile2 << 1), prob * 0.1, layer) * 0.1;
+                    score += GetMoveScore(grid | tile2, prob * 0.9, layer, transTable) * 0.9;
+                    score += GetMoveScore(grid | (tile2 << 1), prob * 0.1, layer, transTable) * 0.1;
                 }
                 tmp >>= 4;
                 tile2 <<= 4;
@@ -368,29 +343,46 @@ namespace _2048AI
             score /= empty;
             try
             {
-                TransTable.Add(grid, score);
+                transTable.Add(grid, score);
             }
             catch { }
 
             return score;
         }
 
-        private static double GetMoveScore(UInt64 grid, double prob, int layer)
+        private static double GetMoveScore(UInt64 grid, double prob, int layer, Dictionary<UInt64, double> transTable)
         {
             double maxScore = double.MinValue;
-            //Parallel.For(0, 4, i =>
-            // {
-            //     UInt64 aftermove = Move(grid, i);
-            //     double score = GetAvgGridScore(aftermove, prob, layer + 1);
-            //     if (maxScore < score)
-            //         maxScore = score;
-            // });
+
+            UInt64[] aftermove = new UInt64[4];
+            int ignoreDire = -1;
+            double minScore = double.MaxValue;
             for (int i = 0; i < 4; i++)
             {
-                UInt64 aftermove = Move(grid, i);
-                double score = GetAvgGridScore(aftermove, prob, layer - 1);
+                aftermove[i] = Move(grid, i);
+                //double tmp = GetHeurScore(aftermove[i]);
+                //if (tmp < minScore)
+                //{
+                //    minScore = tmp;
+                //    ignoreDire = i;
+                //}
+            }
+
+
+            for (int i = 0; i < 4; i++)
+            {
+                //UInt64 aftermove = Move(grid, i);
+                if (i == ignoreDire)
+                    continue;
+                if (aftermove[i] == grid)
+                    continue;
+                double score = GetAvgGridScore(aftermove[i], prob, layer - 1, transTable);
                 if (maxScore < score)
                     maxScore = score;
+            }
+            if (maxScore == double.MinValue)
+            {
+                return GetPanHeurScore(grid);
             }
             return maxScore;
         }
@@ -409,34 +401,65 @@ namespace _2048AI
                     count[Log2(grids[i, j])]++;
                 }
             }
-            for (int i = 3; i < 20; i++)
+            for (int i = 4; i < 20; i++)
             {
                 if (count[i] == 0)
-                    return (i - 5);
+                    return (i - 3);
             }
             return -1;
         }
 
         public static int GetProposeMove(int[,] grids)
         {
-            TransTable.Clear();
             UInt64 grid = Convert(grids);
             int direction = -1;
             double maxScore = double.MinValue;
+            double[] score = new double[4];
+  
+            int layers = Math.Max(PredictLayer(grids), LayerThreshold);
+
+            Parallel.For(0, 4, i =>
+            {
+                score[i] = double.MinValue;
+                UInt64 aftermove = Move(grid, i);
+                if (aftermove != grid)
+                {
+                    score[i] = GetAvgGridScore(aftermove, 1, layers, TransTable[i]);
+                }
+            });
+            //for (int i = 0; i < 4; i++)
+            //{
+            //    if (aftermove[i] != grid)
+            //    {
+            //        score[i] = GetAvgGridScore(aftermove[i], 1, layers, TransTable[0]);
+            //    }
+            //}
+
+
             for (int i = 0; i < 4; i++)
             {
-                UInt64 aftermove = Move(grid, i);
-                if (aftermove == grid)
-                    continue;
-
-                int layers = Math.Max(PredictLayer(grids), LayerThreshold);
-                double score = GetAvgGridScore(aftermove, 1, layers);
-                if (maxScore < score)
+                if (maxScore <= score[i])
                 {
-                    maxScore = score;
+                    maxScore = score[i];
                     direction = i;
                 }
             }
+            //for (int i = 0; i < 4; i++)
+            //{
+            //    UInt64 aftermove = Move(grid, i);
+            //    if (aftermove == grid)
+            //        continue;
+
+            //    int layers = Math.Max(PredictLayer(grids), LayerThreshold);
+            //    double score = GetAvgGridScore(aftermove, 1, layers);
+            //    if (maxScore <= score)
+            //    {
+            //        maxScore = score;
+            //        direction = i;
+            //    }
+            //}
+            for (int i = 0; i < 4; i++)
+                TransTable[i].Clear();
             return direction;
         }
 
